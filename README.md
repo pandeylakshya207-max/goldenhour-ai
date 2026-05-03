@@ -31,6 +31,7 @@ GoldenHour AI receives message (WhatsApp / SMS / Voice)
         ↓
 LLM Orchestrator triages severity → extracts location → routes tasks
         ↓ (all parallel, < 90 seconds)
+        
 ┌─────────────────────────────────────────────────────┐
 │  GeoAgent      → Validates GPS coordinates          │
 │  DispatchAgent → Alerts nearest ambulance via SMS   │
@@ -39,7 +40,9 @@ LLM Orchestrator triages severity → extracts location → routes tasks
 │  FamilyAgent   → Notifies kin via vehicle reg       │
 │  ReportAgent   → Generates FIR + insurance PDF      │
 └─────────────────────────────────────────────────────┘
+
         ↓
+        
 Bystander gets live ETA updates
 Hospital activates trauma team BEFORE ambulance arrives
 🤖 AI Architecture
@@ -49,11 +52,13 @@ INPUT LAYER
 ├── Voice call (Twilio Voice + Whisper STT)
 └── Photo (GPT-4o Vision → severity score)
 
+
 ORCHESTRATOR
 └── Claude claude-sonnet-4-20250514 (Anthropic)
     ├── Triage: fragmented text → structured JSON
     ├── RAG: ChromaDB + WHO/Red Cross first-aid docs
     └── Fallback: rule-based classifier if API > 3s
+    
 
 SPECIALIST AGENTS (Celery parallel tasks)
 ├── GeoAgent       → Google Maps Geocoding API
@@ -62,6 +67,9 @@ SPECIALIST AGENTS (Celery parallel tasks)
 ├── GuideAgent     → CPR TTS (gTTS / ElevenLabs)
 ├── FamilyAgent    → Vehicle reg lookup + SMS
 └── ReportAgent    → ReportLab PDF generation
+
+
+
 🧱 Tech Stack
 Layer	Technology
 LLM	Claude claude-sonnet-4-20250514 (Anthropic)
@@ -74,7 +82,10 @@ STT	OpenAI Whisper
 TTS	gTTS / ElevenLabs
 Frontend	React + Tailwind CSS (hospital dashboard)
 Deploy	Railway.app + Cloudflare
+
+
 📁 Project Structure
+
 goldenhour-ai/
 ├── backend/
 │   ├── main.py                  # FastAPI app + webhook endpoints
@@ -103,60 +114,6 @@ goldenhour-ai/
 ├── docker-compose.yml
 ├── requirements.txt
 └── README.md
-🚀 Quick Start (Local Demo)
-bash
-# Clone repo
-git clone https://github.com/theencoder/goldenhour-ai.git
-cd goldenhour-ai
 
-# Install dependencies
-pip install -r requirements.txt
 
-# Set environment variables
-cp .env.example .env
-# Add your keys:
-# ANTHROPIC_API_KEY=
-# TWILIO_ACCOUNT_SID=
-# TWILIO_AUTH_TOKEN=
-# TWILIO_WHATSAPP_NUMBER=
-# GOOGLE_MAPS_API_KEY=
-# OPENAI_API_KEY=
-
-# Start Redis
-docker run -d -p 6379:6379 redis
-
-# Seed database
-python backend/db/seed.py
-
-# Run server
-uvicorn backend.main:app --reload
-
-# Expose via ngrok (for Twilio webhook testing)
-ngrok http 8000
-# Copy the ngrok URL → paste into Twilio WhatsApp sandbox webhook
-🔌 API Endpoints
-Endpoint	Method	Description
-/webhook/whatsapp	POST	Incoming WhatsApp messages + media
-/webhook/voice	POST	Incoming voice call transcription
-/incident/{id}	GET	Retrieve incident status + agent results
-/incident/{id}/live	WS	WebSocket live ETA updates
-/hospital/prealert	POST	Internal ER pre-alert trigger
-/report/{id}	GET	Download auto-generated incident PDF
-🌍 BIMSTEC Impact
-Metric	Projection
-Lives saveable per year	30,000+
-Reachable users (WhatsApp)	2.1 Billion
-Infrastructure needed	Zero
-Languages supported	8
-App install required	None
-73% WhatsApp penetration in BIMSTEC + 68% of accidents in 4G zones = 2.1B people reachable with zero new infrastructure.
-
-📋 Submission Details
-Field	Value
-Hackathon	Road Safety Hackathon 2026 – BIMSTEC
-Organiser	IIT Madras – CoERS
-Track	RoadSoS (Emergency / Safety)
-Team	The Encoder
-Submission deadline	May 31, 2026
-📄 License
 MIT License — open for research and non-commercial safety use.

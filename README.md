@@ -114,8 +114,13 @@ pip install -r requirements.txt
 
 # Set environment variables
 cp .env.example .env
-# Add: ANTHROPIC_API_KEY, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
-#      GOOGLE_MAPS_API_KEY, OPENAI_API_KEY
+# Add your keys:
+# ANTHROPIC_API_KEY=
+# TWILIO_ACCOUNT_SID=
+# TWILIO_AUTH_TOKEN=
+# TWILIO_WHATSAPP_NUMBER=
+# GOOGLE_MAPS_API_KEY=
+# OPENAI_API_KEY=
 
 # Start Redis
 docker run -d -p 6379:6379 redis
@@ -126,8 +131,17 @@ python backend/db/seed.py
 # Run server
 uvicorn backend.main:app --reload
 
-# Expose via ngrok (for Twilio webhook)
+# Expose via ngrok (for Twilio webhook testing)
 ngrok http 8000
+# Copy the ngrok URL → paste into Twilio WhatsApp sandbox webhook
+🔌 API Endpoints
+Endpoint	Method	Description
+/webhook/whatsapp	POST	Incoming WhatsApp messages + media
+/webhook/voice	POST	Incoming voice call transcription
+/incident/{id}	GET	Retrieve incident status + agent results
+/incident/{id}/live	WS	WebSocket live ETA updates
+/hospital/prealert	POST	Internal ER pre-alert trigger
+/report/{id}	GET	Download auto-generated incident PDF
 🌍 BIMSTEC Impact
 Metric	Projection
 Lives saveable per year	30,000+
@@ -135,7 +149,7 @@ Reachable users (WhatsApp)	2.1 Billion
 Infrastructure needed	Zero
 Languages supported	8
 App install required	None
-73% WhatsApp penetration in BIMSTEC + 68% accidents in 4G zones = 2.1B people reachable with zero new infrastructure.
+73% WhatsApp penetration in BIMSTEC + 68% of accidents in 4G zones = 2.1B people reachable with zero new infrastructure.
 
 📋 Submission Details
 Field	Value

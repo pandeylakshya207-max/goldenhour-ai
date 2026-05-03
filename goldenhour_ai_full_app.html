@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--red:#E24B4A;--red-light:#FCEBEB;--red-dark:#501313;
+--amber:#BA7517;--amber-light:#FAEEDA;
+--green:#3B6D11;--green-light:#EAF3DE;
+--teal:#0F6E56;--teal-light:#E1F5EE;
+--gray:#2C2C2A;--gray-mid:#888780;--gray-light:#F1EFE8;
+--font-display:'Syne',sans-serif;
+--font-mono:'Space Mono',monospace;
+}
+
+body{background:#0a0a0a;color:#f0ede8;font-family:var(--font-display);min-height:100vh;overflow-x:hidden}
+
+.app{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;min-height:100vh;gap:0}
+
+.header{grid-column:1/-1;background:#0a0a0a;border-bottom:1px solid #222;padding:16px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.logo{font-size:22px;font-weight:800;letter-spacing:-1px}
+.logo span{color:#E24B4A}
+.status-pill{background:#E24B4A;color:#fff;font-size:11px;font-family:var(--font-mono);padding:4px 10px;border-radius:20px;animation:pulse 2s infinite}
+.tagline{font-size:12px;color:#666;font-family:var(--font-mono);margin-left:auto}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+
+.panel-left{border-right:1px solid #1a1a1a;display:flex;flex-direction:column}
+.panel-right{display:flex;flex-direction:column;background:#0d0d0d}
+
+.panel-title{font-size:11px;font-family:var(--font-mono);color:#555;padding:12px 20px;border-bottom:1px solid #1a1a1a;letter-spacing:2px;text-transform:uppercase}
+
+.whatsapp-sim{flex:1;display:flex;flex-direction:column;max-height:calc(100vh - 120px)}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#111}
+.chat-messages::-webkit-scrollbar{width:3px}
+.chat-messages::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+
+.msg{max-width:80%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.5;position:relative}
+.msg-user{align-self:flex-end;background:#25D366;color:#0a0a0a;border-radius:12px 12px 2px 12px;font-family:var(--font-mono)}
+.msg-bot{align-self:flex-start;background:#1e1e1e;color:#f0ede8;border-radius:12px 12px 12px 2px;border:1px solid #2a2a2a}
+.msg-bot.critical{border-color:#E24B4A;background:#1a0a0a}
+.msg-bot.success{border-color:#3B6D11;background:#0a1a0a}
+.msg-time{font-size:10px;color:#555;margin-top:4px;font-family:var(--font-mono)}
+.msg-bot.critical .msg-time{color:#E24B4A}
+
+.alert-badge{display:inline-block;background:#E24B4A;color:#fff;font-size:10px;font-family:var(--font-mono);padding:2px 8px;border-radius:4px;margin-bottom:6px}
+.alert-badge.green{background:#3B6D11}
+.alert-badge.amber{background:#BA7517}
+
+.chat-input-area{padding:12px 16px;border-top:1px solid #1a1a1a;background:#0d0d0d;display:flex;gap:8px;align-items:center}
+.chat-input{flex:1;background:#1a1a1a;border:1px solid #2a2a2a;color:#f0ede8;font-family:var(--font-mono);font-size:12px;padding:10px 14px;border-radius:24px;outline:none}
+.chat-input::placeholder{color:#444}
+.send-btn{background:#25D366;color:#0a0a0a;border:none;border-radius:50%;width:38px;height:38px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform 0.1s}
+.send-btn:hover{transform:scale(1.05)}
+
+.quick-btns{display:flex;gap:6px;padding:8px 16px;overflow-x:auto;background:#0d0d0d}
+.quick-btns::-webkit-scrollbar{display:none}
+.qbtn{background:#1a1a1a;border:1px solid #2a2a2a;color:#888;font-size:11px;font-family:var(--font-mono);padding:5px 10px;border-radius:12px;cursor:pointer;white-space:nowrap;transition:all 0.2s;flex-shrink:0}
+.qbtn:hover{border-color:#E24B4A;color:#E24B4A}
+
+.dashboard{flex:1;overflow-y:auto;padding:16px}
+.dashboard::-webkit-scrollbar{width:3px}
+.dashboard::-webkit-scrollbar-thumb{background:#222}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.stat{background:#141414;border:1px solid #1e1e1e;border-radius:10px;padding:12px}
+.stat-label{font-size:10px;font-family:var(--font-mono);color:#555;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.stat-val{font-size:22px;font-weight:800;letter-spacing:-1px}
+.stat-val.red{color:#E24B4A}
+.stat-val.green{color:#5DCAA5}
+.stat-val.amber{color:#EF9F27}
+.stat-sub{font-size:10px;color:#444;font-family:var(--font-mono);margin-top:2px}
+
+.section-label{font-size:10px;font-family:var(--font-mono);color:#444;letter-spacing:2px;text-transform:uppercase;margin:12px 0 8px}
+
+.incident-card{background:#141414;border:1px solid #1e1e1e;border-radius:10px;padding:12px;margin-bottom:8px;transition:border-color 0.3s}
+.incident-card.active{border-color:#E24B4A;animation:glow 2s infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(226,75,74,0)}50%{box-shadow:0 0 8px 0 rgba(226,75,74,0.3)}}
+.incident-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.incident-id{font-family:var(--font-mono);font-size:11px;color:#555}
+.severity-badge{font-size:10px;font-family:var(--font-mono);padding:3px 8px;border-radius:4px}
+.sev-critical{background:#501313;color:#F7C1C1}
+.sev-moderate{background:#412402;color:#FAC775}
+.sev-minor{background:#173404;color:#C0DD97}
+.incident-loc{font-size:12px;color:#ccc;margin-bottom:6px}
+.incident-agents{display:flex;gap:4px;flex-wrap:wrap}
+.agent-chip{font-size:10px;font-family:var(--font-mono);padding:2px 7px;border-radius:4px;background:#1e1e1e;border:1px solid #2a2a2a;color:#666}
+.agent-chip.done{border-color:#3B6D11;color:#5DCAA5;background:#0a1a0a}
+.agent-chip.running{border-color:#BA7517;color:#EF9F27;background:#1a1000;animation:pulse 1s infinite}
+
+.agent-timeline{background:#141414;border:1px solid #1e1e1e;border-radius:10px;padding:14px;margin-bottom:8px}
+.timeline-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;position:relative}
+.timeline-row:not(:last-child)::before{content:'';position:absolute;left:14px;top:28px;width:1px;height:calc(100% - 10px);background:#1e1e1e}
+.t-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;border:1px solid #2a2a2a;background:#1a1a1a;color:#555}
+.t-dot.done{background:#0a1a0a;border-color:#3B6D11;color:#5DCAA5}
+.t-dot.running{background:#1a0a00;border-color:#BA7517;color:#EF9F27;animation:pulse 1s infinite}
+.t-dot.waiting{background:#1a1a1a;border-color:#1e1e1e;color:#333}
+.t-content{flex:1}
+.t-title{font-size:12px;font-weight:700;margin-bottom:2px}
+.t-detail{font-size:11px;font-family:var(--font-mono);color:#555}
+.t-detail.done{color:#3B6D11}
+.t-detail.running{color:#BA7517}
+
+.cpr-box{background:#1a0a0a;border:1px solid #E24B4A;border-radius:10px;padding:14px;margin-bottom:8px}
+.cpr-title{font-size:11px;font-family:var(--font-mono);color:#E24B4A;letter-spacing:2px;margin-bottom:10px}
+.cpr-step{font-size:14px;font-weight:700;color:#f0ede8;margin-bottom:8px;line-height:1.4}
+.cpr-counter{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+.cpr-count-dot{width:16px;height:16px;border-radius:50%;background:#2a1a1a;border:1px solid #3a2a2a;transition:all 0.3s}
+.cpr-count-dot.active{background:#E24B4A;border-color:#E24B4A}
+.cpr-lang-bar{display:flex;gap:6px;margin-top:8px}
+.lang-btn{font-size:10px;font-family:var(--font-mono);padding:3px 8px;border-radius:4px;border:1px solid #2a2a2a;background:#1a1a1a;color:#555;cursor:pointer}
+.lang-btn.active{border-color:#E24B4A;color:#E24B4A}
+
+.map-sim{background:#141414;border:1px solid #1e1e1e;border-radius:10px;padding:14px;margin-bottom:8px;position:relative;overflow:hidden}
+.map-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;aspect-ratio:2/1;margin-bottom:10px}
+.map-cell{border-radius:2px;background:#1a1a1a}
+.map-cell.road{background:#222}
+.map-cell.incident{background:#E24B4A;animation:pulse 1s infinite}
+.map-cell.ambulance{background:#EF9F27;animation:pulse 1.5s infinite}
+.map-cell.hospital{background:#5DCAA5}
+.map-legend{display:flex;gap:12px;flex-wrap:wrap}
+.map-leg{display:flex;align-items:center;gap:5px;font-size:10px;font-family:var(--font-mono);color:#555}
+.map-leg-dot{width:10px;height:10px;border-radius:2px}
+
+.arch-flow{background:#141414;border:1px solid #1e1e1e;border-radius:10px;padding:14px;margin-bottom:8px}
+.flow-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.flow-node{font-size:10px;font-family:var(--font-mono);padding:5px 10px;border-radius:6px;border:1px solid #2a2a2a;color:#888;background:#1a1a1a;white-space:nowrap}
+.flow-node.input{border-color:#BA7517;color:#EF9F27;background:#1a1000}
+.flow-node.brain{border-color:#534AB7;color:#AFA9EC;background:#0a0a1a;font-weight:700}
+.flow-node.agent{border-color:#0F6E56;color:#5DCAA5;background:#0a1a14}
+.flow-node.output{border-color:#E24B4A;color:#F7C1C1;background:#1a0a0a}
+.flow-arrow{color:#333;font-size:14px}
+
+.tabs{display:flex;gap:0;border-bottom:1px solid #1a1a1a;background:#0d0d0d}
+.tab{font-size:11px;font-family:var(--font-mono);padding:10px 14px;cursor:pointer;color:#555;border-bottom:2px solid transparent;transition:all 0.2s;letter-spacing:1px}
+.tab.active{color:#f0ede8;border-bottom-color:#E24B4A}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+.eta-bar{background:#1a1a1a;border-radius:4px;height:6px;overflow:hidden;margin-top:6px}
+.eta-fill{height:100%;background:linear-gradient(90deg,#E24B4A,#EF9F27);border-radius:4px;transition:width 1s}
+
+.notify-toast{position:fixed;bottom:20px;right:20px;background:#0a1a0a;border:1px solid #3B6D11;border-radius:10px;padding:12px 16px;font-size:12px;font-family:var(--font-mono);color:#5DCAA5;z-index:999;transform:translateX(200%);transition:transform 0.4s;max-width:250px}
+.notify-toast.show{transform:translateX(0)}
+.notify-toast-title{font-weight:700;margin-bottom:4px;color:#97C459}
+
+.demo-btn{width:100%;background:#E24B4A;color:#fff;border:none;border-radius:8px;padding:10px;font-family:var(--font-display);font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;transition:all 0.2s}
+.demo-btn:hover{background:#A32D2D}
+.demo-btn.secondary{background:#1a1a1a;border:1px solid #2a2a2a;color:#888}
+.demo-btn.secondary:hover{border-color:#555;color:#ccc}
+
+@media(max-width:700px){
+.app{grid-template-columns:1fr;grid-template-rows:auto auto auto}
+.panel-left,.panel-right{max-height:60vh}
+.whatsapp-sim{max-height:55vh}
+}
+</style>
+</head>
+<body>
+<div class="notify-toast" id="toast">
+  <div class="notify-toast-title" id="toast-title">Dispatch Alert</div>
+  <div id="toast-body">Ambulance KA-01 dispatched</div>
+</div>
+
+<div class="app">
+<div class="header">
+  <div class="logo">Golden<span>Hour</span> AI</div>
+  <div class="status-pill">LIVE</div>
+  <div class="tagline">90 sec • Any phone • Zero install</div>
+</div>
+
+<div class="panel-left">
+  <div class="panel-title">WhatsApp Interface — Bystander View</div>
+  <div class="quick-btns" id="quickBtns">
+    <button class="qbtn" onclick="quickSend('accident on NH-44 near Krishnagiri, 2 people injured, one not breathing')">Demo: Critical accident</button>
+    <button class="qbtn" onclick="quickSend('minor crash at Silk Board junction, no injuries')">Demo: Minor crash</button>
+    <button class="qbtn" onclick="quickSend('multiple vehicles pileup near Electronic City flyover')">Demo: Multi-casualty</button>
+    <button class="qbtn" onclick="quickSend('send CPR instructions')">CPR guide</button>
+    <button class="qbtn" onclick="quickSend('what is golden hour')">What is golden hour?</button>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="msg msg-bot">
+      <div>Welcome to <strong>GoldenHour AI</strong>. In an emergency, describe the accident and your location. I'll handle the rest.<br><br>Works in English, Hindi, Bengali, Tamil, Thai.</div>
+      <div class="msg-time">GoldenHour AI • Road Safety BIMSTEC</div>
+    </div>
+  </div>
+  <div class="chat-input-area">
+    <input class="chat-input" id="chatInput" placeholder="Describe the accident..." onkeydown="if(event.key==='Enter')sendMsg()"/>
+    <button class="send-btn" onclick="sendMsg()">↑</button>
+  </div>
+</div>
+
+<div class="panel-right">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
+    <div class="tab" onclick="switchTab('agents')">Agents</div>
+    <div class="tab" onclick="switchTab('cpr')">CPR Guide</div>
+    <div class="tab" onclick="switchTab('arch')">Architecture</div>
+  </div>
+
+  <div class="dashboard" id="dashboardPanel">
+    <div class="tab-content active" id="tab-dashboard">
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-label">Active incidents</div><div class="stat-val red" id="statActive">0</div><div class="stat-sub">last 24h</div></div>
+        <div class="stat"><div class="stat-label">Avg response</div><div class="stat-val amber" id="statTime">—</div><div class="stat-sub">minutes</div></div>
+        <div class="stat"><div class="stat-label">Dispatched</div><div class="stat-val green" id="statDisp">0</div><div class="stat-sub">ambulances</div></div>
+        <div class="stat"><div class="stat-label">Hospitals alerted</div><div class="stat-val green" id="statHosp">0</div><div class="stat-sub">pre-admitted</div></div>
+      </div>
+
+      <div class="section-label">Live incident tracker</div>
+      <div id="incidentList">
+        <div style="font-size:12px;font-family:'Space Mono',monospace;color:#333;padding:20px 0;text-align:center">No active incidents. Send a message to trigger.</div>
+      </div>
+
+      <div class="section-label">Map simulation</div>
+      <div class="map-sim" id="mapSim">
+        <div class="map-grid" id="mapGrid"></div>
+        <div class="map-legend">
+          <div class="map-leg"><div class="map-leg-dot" style="background:#E24B4A"></div>Incident</div>
+          <div class="map-leg"><div class="map-leg-dot" style="background:#EF9F27"></div>Ambulance</div>
+          <div class="map-leg"><div class="map-leg-dot" style="background:#5DCAA5"></div>Hospital</div>
+          <div class="map-leg"><div class="map-leg-dot" style="background:#222"></div>Road</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-agents">
+      <div class="section-label">Multi-agent pipeline</div>
+      <div class="agent-timeline" id="agentTimeline">
+        <div style="font-size:12px;font-family:'Space Mono',monospace;color:#333;text-align:center;padding:16px">Agents idle. Trigger an incident.</div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-cpr">
+      <div class="cpr-box" id="cprBox">
+        <div class="cpr-title">CPR VOICE GUIDE — AI FIRST AID</div>
+        <div class="cpr-step" id="cprStep">Press the button below to start CPR guidance protocol</div>
+        <div class="cpr-counter" id="cprCounter"></div>
+        <div class="cpr-lang-bar">
+          <div class="lang-btn active" onclick="setLang('en',this)">EN</div>
+          <div class="lang-btn" onclick="setLang('hi',this)">HI</div>
+          <div class="lang-btn" onclick="setLang('bn',this)">BN</div>
+          <div class="lang-btn" onclick="setLang('ta',this)">TA</div>
+        </div>
+        <button class="demo-btn" style="margin-top:12px" onclick="startCPR()">Start CPR Protocol</button>
+        <button class="demo-btn secondary" onclick="stopCPR()" id="stopCprBtn" style="display:none">Stop</button>
+      </div>
+      <div class="section-label">First aid protocols loaded</div>
+      <div style="background:#141414;border:1px solid #1e1e1e;border-radius:10px;padding:12px">
+        <div style="font-size:11px;font-family:'Space Mono',monospace;color:#555;line-height:1.8">
+          ✓ WHO Basic Life Support protocol v2024<br>
+          ✓ Red Cross CPR adult/child/infant<br>
+          ✓ BIMSTEC first aid law compliance<br>
+          ✓ Choking protocol (Heimlich)<br>
+          ✓ Bleeding control guide<br>
+          ✓ Spinal injury stabilization
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-arch">
+      <div class="section-label">System architecture</div>
+      <div class="arch-flow">
+        <div class="section-label" style="margin:0 0 8px">Input layer</div>
+        <div class="flow-row">
+          <div class="flow-node input">WhatsApp</div>
+          <div class="flow-node input">SMS/USSD</div>
+          <div class="flow-node input">Voice call</div>
+          <div class="flow-node input">Photo</div>
+        </div>
+        <div class="flow-arrow" style="margin:4px 0 4px 8px">↓</div>
+        <div class="section-label" style="margin:0 0 8px">Orchestrator</div>
+        <div class="flow-row">
+          <div class="flow-node brain">LLM Triage Engine (Claude Sonnet)</div>
+          <div class="flow-node brain">RAG: First Aid + Laws</div>
+        </div>
+        <div class="flow-arrow" style="margin:4px 0 4px 8px">↓ parallel dispatch</div>
+        <div class="section-label" style="margin:0 0 8px">Specialist agents</div>
+        <div class="flow-row">
+          <div class="flow-node agent">GeoAgent</div>
+          <div class="flow-node agent">DispatchAgent</div>
+          <div class="flow-node agent">HospitalAgent</div>
+          <div class="flow-node agent">GuideAgent</div>
+          <div class="flow-node agent">FamilyAgent</div>
+        </div>
+        <div class="flow-arrow" style="margin:4px 0 4px 8px">↓</div>
+        <div class="section-label" style="margin:0 0 8px">Real-world outputs</div>
+        <div class="flow-row">
+          <div class="flow-node output">Ambulance SMS</div>
+          <div class="flow-node output">Hospital ER alert</div>
+          <div class="flow-node output">Family notify</div>
+          <div class="flow-node output">Incident report</div>
+        </div>
+      </div>
+      <div class="section-label">Tech stack</div>
+      <div style="background:#141414;border:1px solid #1e1e1e;border-radius:10px;padding:12px">
+        <div style="font-size:11px;font-family:'Space Mono',monospace;color:#555;line-height:2">
+          <span style="color:#AFA9EC">LLM</span>: Claude claude-sonnet-4-20250514 (Anthropic)<br>
+          <span style="color:#5DCAA5">Backend</span>: FastAPI + Celery + Redis<br>
+          <span style="color:#EF9F27">Messaging</span>: Twilio WhatsApp + Voice API<br>
+          <span style="color:#F7C1C1">Maps</span>: Google Maps Geocoding + Routes<br>
+          <span style="color:#5DCAA5">Vector DB</span>: ChromaDB (first aid RAG)<br>
+          <span style="color:#AFA9EC">STT</span>: OpenAI Whisper<br>
+          <span style="color:#EF9F27">Deploy</span>: Railway.app + Cloudflare
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+var incidents = [];
+var statsData = {active:0,dispatched:0,hospitals:0};
+var cprInterval = null;
+var cprStep = 0;
+var cprCount = 0;
+var activeLang = 'en';
+var agentStates = [];
+
+var cprScripts = {
+  en: [
+    "Check if the person is responsive. Tap their shoulders firmly and shout 'Are you OK?'",
+    "Call for help! Ensure ambulance is already dispatched by GoldenHour AI.",
+    "Tilt the head back gently. Lift the chin to open the airway.",
+    "Look, listen, feel for breathing for 10 seconds.",
+    "Begin chest compressions. Place hands center of chest. Press down 5-6cm, 30 times.",
+    "After 30 compressions: 2 rescue breaths. Pinch nose, seal mouth, blow 1 second.",
+    "Continue 30:2 cycle until ambulance arrives. You are saving a life."
+  ],
+  hi: [
+    "जांचें कि व्यक्ति होश में है या नहीं। कंधे थपथपाएं और पूछें 'क्या आप ठीक हैं?'",
+    "मदद के लिए पुकारें! GoldenHour AI ने एम्बुलेंस भेज दी है।",
+    "सिर को धीरे से पीछे झुकाएं। ठुड्डी उठाकर वायुमार्ग खोलें।",
+    "10 सेकंड तक सांस की जांच करें।",
+    "छाती दबाना शुरू करें। छाती के केंद्र पर हाथ रखें। 30 बार 5-6 सेमी दबाएं।",
+    "30 दबाव के बाद: 2 सांसें दें। नाक बंद करें, मुंह बंद करें, 1 सेकंड फूंकें।",
+    "30:2 चक्र जारी रखें। आप एक जीवन बचा रहे हैं।"
+  ],
+  bn: [
+    "পরীক্ষা করুন ব্যক্তি সাড়া দিচ্ছে কিনা। কাঁধে থাপ দিন এবং জিজ্ঞেস করুন 'আপনি ঠিক আছেন?'",
+    "সাহায্য ডাকুন! GoldenHour AI অ্যাম্বুলেন্স পাঠিয়েছে।",
+    "মাথা আস্তে পিছনে হেলান। বায়ুপথ খুলতে থুতনি তুলুন।",
+    "১০ সেকেন্ড শ্বাস পরীক্ষা করুন।",
+    "বুকে চাপ দেওয়া শুরু করুন। বুকের কেন্দ্রে হাত রাখুন। ৩০ বার ৫-৬ সেমি চাপুন।",
+    "৩০ চাপের পরে: ২টি শ্বাস দিন।",
+    "৩০:২ চক্র চালিয়ে যান। আপনি একটি জীবন বাঁচাচ্ছেন।"
+  ],
+  ta: [
+    "நபர் உணர்வுடன் இருக்கிறார்களா என சரிபாருங்கள்.",
+    "உதவிக்கு அழையுங்கள்! GoldenHour AI ஆம்புலன்ஸ் அனுப்பியுள்ளது.",
+    "தலையை மெதுவாக பின்னோக்கி சாய்க்கவும்.",
+    "10 வினாடிகள் சுவாசத்தை சரிபாருங்கள்.",
+    "மார்பு அழுத்தங்களை தொடங்குங்கள். 30 முறை அழுத்துங்கள்.",
+    "30 அழுத்தங்களுக்கு பிறகு: 2 மூச்சுகள் கொடுங்கள்.",
+    "நீங்கள் ஒரு உயிரை காப்பாற்றுகிறீர்கள்."
+  ]
+};
+
+function setLang(l, el) {
+  activeLang = l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(cprInterval) { cprStep = Math.min(cprStep, cprScripts[l].length-1); updateCPRStep(); }
+}
+
+function initMap() {
+  var g = document.getElementById('mapGrid');
+  g.innerHTML = '';
+  var roads = [8,9,10,11,16,17,18,19,24,25,26,27,32,33,34,35];
+  for(var i=0;i<48;i++){
+    var c = document.createElement('div');
+    c.className = 'map-cell' + (roads.includes(i) ? ' road' : '');
+    c.id = 'mc'+i;
+    g.appendChild(c);
+  }
+}
+
+function updateMap(incidentCell, ambulanceCell, hospitalCell) {
+  initMap();
+  if(incidentCell!=null) document.getElementById('mc'+incidentCell).className = 'map-cell incident';
+  if(ambulanceCell!=null) document.getElementById('mc'+ambulanceCell).className = 'map-cell ambulance';
+  if(hospitalCell!=null) document.getElementById('mc'+hospitalCell).className = 'map-cell hospital';
+}
+
+function showToast(title, body) {
+  var t = document.getElementById('toast');
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-body').textContent = body;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 4000);
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    var tabs=['dashboard','agents','cpr','arch'];
+    t.classList.toggle('active', tabs[i]===tab);
+  });
+  document.querySelectorAll('.tab-content').forEach(tc=>{
+    tc.classList.toggle('active', tc.id==='tab-'+tab);
+  });
+}
+
+function addMsg(text, isUser, type) {
+  var c = document.getElementById('chatMessages');
+  var d = document.createElement('div');
+  d.className = 'msg ' + (isUser ? 'msg-user' : 'msg-bot ' + (type||''));
+  d.innerHTML = text + '<div class="msg-time">' + (isUser ? 'You • now' : 'GoldenHour AI • ' + new Date().toLocaleTimeString()) + '</div>';
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+function sendMsg() {
+  var inp = document.getElementById('chatInput');
+  var val = inp.value.trim();
+  if(!val) return;
+  inp.value = '';
+  processMessage(val);
+}
+
+function quickSend(txt) {
+  document.getElementById('chatInput').value = txt;
+  sendMsg();
+}
+
+function classifyMessage(text) {
+  var t = text.toLowerCase();
+  if(t.includes('not breathing') || t.includes('unconscious') || t.includes('pileup') || t.includes('multiple')) return 'CRITICAL';
+  if(t.includes('minor') || t.includes('no injur') || t.includes('fender')) return 'MINOR';
+  if(t.includes('cpr') || t.includes('first aid')) return 'CPR_REQUEST';
+  if(t.includes('golden hour')) return 'INFO';
+  return 'MODERATE';
+}
+
+function extractLocation(text) {
+  var locs = ['NH-44','Krishnagiri','Silk Board','Electronic City','Bengaluru','Chennai','Hyderabad','NICE Road','Hosur'];
+  for(var l of locs) { if(text.toLowerCase().includes(l.toLowerCase())) return l; }
+  return 'Detected via GPS';
+}
+
+var incidentCounter = 0;
+
+function processMessage(text) {
+  addMsg(text, true);
+  var severity = classifyMessage(text);
+  var location = extractLocation(text);
+
+  if(severity === 'CPR_REQUEST') {
+    setTimeout(()=>{
+      addMsg('Starting CPR guidance now. Switch to the <strong>CPR Guide</strong> tab for step-by-step instructions.<br><br>Key: 30 compressions → 2 breaths → repeat until ambulance arrives.', false, 'success');
+      switchTab('cpr');
+    }, 600);
+    return;
+  }
+
+  if(severity === 'INFO') {
+    setTimeout(()=>{
+      addMsg('<strong>Golden Hour</strong> = first 60 minutes after trauma. Survival rate is 80%+ if reached in time, under 20% if not.<br><br>GoldenHour AI coordinates dispatch + hospital pre-alert in under 90 seconds — closing this gap.', false);
+    }, 600);
+    return;
+  }
+
+  incidentCounter++;
+  var id = 'INC-' + String(incidentCounter).padStart(4,'0');
+  var eta = severity === 'CRITICAL' ? '7' : severity === 'MODERATE' ? '12' : '18';
+
+  setTimeout(()=>{
+    addMsg('Understood. Analyzing...<br><span style="font-family:\'Space Mono\',monospace;font-size:11px;color:#888">Triage: ' + severity + ' | Location: ' + location + '</span>', false, severity==='CRITICAL'?'critical':'');
+  }, 500);
+
+  setTimeout(()=>{
+    addMsg('<div class="alert-badge">DISPATCHING ' + (severity==='CRITICAL'?5:severity==='MODERATE'?3:1) + ' AGENTS</div><br>' +
+      '🚑 Ambulance KA-01 dispatched — ETA <strong>' + eta + ' min</strong><br>' +
+      '🏥 Trauma Center pre-alerted — trauma team activating<br>' +
+      (severity==='CRITICAL' ? '🩸 Blood bank KA-BB-03 on standby<br>' : '') +
+      '👨‍👩‍👧 Family notification sent via vehicle reg lookup<br>' +
+      '📋 Incident report auto-generated<br><br>' +
+      '<strong>Stay with the patient.</strong> ' + (severity==='CRITICAL' ? 'CPR instructions starting now.' : 'Help is on the way.'),
+      false, severity==='CRITICAL'?'critical':'success');
+    triggerFullFlow(id, severity, location, eta);
+  }, 1800);
+
+  if(severity==='CRITICAL') {
+    setTimeout(()=>{
+      addMsg('🗣️ <strong>CPR GUIDE ACTIVE:</strong> Place both hands on center of chest. Press down 5-6cm firmly. Do 30 compressions, then 2 rescue breaths. Repeat. I will count with you.', false, 'critical');
+      switchTab('cpr');
+      startCPR();
+    }, 3200);
+  }
+}
+
+function triggerFullFlow(id, severity, location, eta) {
+  statsData.active++;
+  statsData.dispatched += (severity==='CRITICAL'?1:1);
+  statsData.hospitals += 1;
+  document.getElementById('statActive').textContent = statsData.active;
+  document.getElementById('statTime').textContent = eta;
+  document.getElementById('statDisp').textContent = statsData.dispatched;
+  document.getElementById('statHosp').textContent = statsData.hospitals;
+
+  var cells = {CRITICAL:[17,8,35], MODERATE:[26,9,35], MINOR:[25,16,33]};
+  var c = cells[severity] || cells.MODERATE;
+  updateMap(c[0], c[1], c[2]);
+
+  var il = document.getElementById('incidentList');
+  var card = document.createElement('div');
+  card.className = 'incident-card active';
+  card.id = 'card-'+id;
+  card.innerHTML = `
+    <div class="incident-header">
+      <div class="incident-id">${id}</div>
+      <div class="severity-badge sev-${severity.toLowerCase()}">${severity}</div>
+    </div>
+    <div class="incident-loc">📍 ${location}</div>
+    <div style="font-size:11px;font-family:'Space Mono',monospace;color:#555;margin-bottom:6px">ETA: ${eta} min | <span id="countdown-${id}">${eta}:00</span></div>
+    <div class="eta-bar"><div class="eta-fill" id="etabar-${id}" style="width:100%"></div></div>
+    <div class="incident-agents" style="margin-top:8px" id="agents-${id}">
+      <div class="agent-chip running">GeoAgent</div>
+      <div class="agent-chip">DispatchAgent</div>
+      <div class="agent-chip">HospitalAgent</div>
+      <div class="agent-chip">GuideAgent</div>
+      <div class="agent-chip">FamilyAgent</div>
+    </div>`;
+  if(il.children.length===1 && il.children[0].tagName==='DIV') il.innerHTML='';
+  il.insertBefore(card, il.firstChild);
+
+  updateAgentTimeline(severity, location, eta);
+
+  var chips = card.querySelectorAll('.agent-chip');
+  var delays = [500,1000,1500,2000,2800];
+  delays.forEach((d,i)=>{
+    setTimeout(()=>{
+      chips[i].classList.remove('running');
+      chips[i].classList.add('done');
+      chips[i].classList.add('running');
+      setTimeout(()=>{chips[i].classList.remove('running'); chips[i].classList.add('done');},800);
+    },d);
+  });
+
+  setTimeout(()=>showToast('Ambulance dispatched', 'KA-01 en route • ETA '+eta+' min'), 1000);
+  setTimeout(()=>showToast('Hospital pre-alerted', 'Victoria Hospital trauma team activating'), 2500);
+  setTimeout(()=>showToast('Family notified', '"Help is '+eta+' minutes away"'), 4000);
+
+  var etaInt = parseInt(eta)*60;
+  var elapsed = 0;
+  var countDown = setInterval(()=>{
+    elapsed+=5; etaInt-=5;
+    if(etaInt<=0){clearInterval(countDown); return;}
+    var m=Math.floor(etaInt/60); var s=etaInt%60;
+    var el=document.getElementById('countdown-'+id);
+    var eb=document.getElementById('etabar-'+id);
+    if(el) el.textContent=m+':'+(s<10?'0':'')+s;
+    if(eb) eb.style.width=Math.max(0,(1-(elapsed/(parseInt(eta)*60)))*100)+'%';
+  },5000);
+}
+
+function updateAgentTimeline(severity, location, eta) {
+  var agents = [
+    {icon:'📍', title:'GeoAgent', detail:'Extracted: '+location+' (GPS confirmed)', delay:400},
+    {icon:'🚑', title:'DispatchAgent', detail:'KA-01 alerted • ETA '+eta+' min', delay:900},
+    {icon:'🏥', title:'HospitalAgent', detail:'Victoria Hospital ER pre-alerted', delay:1400},
+    {icon:'🗣️', title:'GuideAgent', detail:'CPR protocol active • Audio sent', delay:1900},
+    {icon:'👨‍👩‍👧', title:'FamilyAgent', detail:'Kin SMS dispatched via reg lookup', delay:2600},
+    {icon:'📋', title:'ReportAgent', detail:'FIR draft + incident PDF generated', delay:3200}
+  ];
+  var tl = document.getElementById('agentTimeline');
+  tl.innerHTML = '';
+  agents.forEach((a,i)=>{
+    var row = document.createElement('div');
+    row.className='timeline-row';
+    row.innerHTML=`<div class="t-dot waiting" id="tdot-${i}">${a.icon}</div><div class="t-content"><div class="t-title">${a.title}</div><div class="t-detail" id="tdet-${i}">Waiting...</div></div>`;
+    tl.appendChild(row);
+    setTimeout(()=>{
+      var dot=document.getElementById('tdot-'+i);
+      var det=document.getElementById('tdet-'+i);
+      if(dot){dot.className='t-dot running'; det.textContent='Processing...'; det.className='t-detail running';}
+      setTimeout(()=>{
+        if(dot){dot.className='t-dot done'; det.textContent=a.detail; det.className='t-detail done';}
+      },700);
+    },a.delay);
+  });
+  switchTab('agents');
+}
+
+function startCPR() {
+  if(cprInterval) clearInterval(cprInterval);
+  cprStep = 0; cprCount = 0;
+  document.getElementById('stopCprBtn').style.display='block';
+  updateCPRStep();
+  cprInterval = setInterval(()=>{
+    if(cprStep < cprScripts[activeLang].length - 1) {
+      cprStep++;
+      updateCPRStep();
+    }
+  }, 5000);
+}
+
+function stopCPR() {
+  if(cprInterval) clearInterval(cprInterval);
+  cprInterval = null;
+  document.getElementById('stopCprBtn').style.display='none';
+  document.getElementById('cprStep').textContent='CPR protocol stopped. Press Start to restart.';
+  document.getElementById('cprCounter').innerHTML='';
+}
+
+function updateCPRStep() {
+  var scripts = cprScripts[activeLang];
+  document.getElementById('cprStep').textContent = (cprStep+1)+'. '+scripts[cprStep];
+  var counter = document.getElementById('cprCounter');
+  counter.innerHTML='';
+  if(cprStep===4) {
+    for(var i=0;i<30;i++){
+      var dot=document.createElement('div');
+      dot.className='cpr-count-dot';
+      dot.id='cpr-dot-'+i;
+      counter.appendChild(dot);
+    }
+    var dotIdx=0;
+    var dotInt=setInterval(()=>{
+      var d=document.getElementById('cpr-dot-'+dotIdx);
+      if(d) d.classList.add('active');
+      dotIdx++;
+      if(dotIdx>=30) clearInterval(dotInt);
+    }, 100);
+  }
+}
+
+initMap();
+</script>
+</body>
+</html>
